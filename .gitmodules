@@ -1,0 +1,6 @@
+[submodule "easylist"]
+	path = easylist
+	url = git@github.com:easylist/easylist.git
+[submodule "easylistchina"]
+	path = easylistchina
+	url = git@github.com:easylist/easylistchina.git
