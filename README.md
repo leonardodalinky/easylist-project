@@ -25,3 +25,35 @@ easylist 的文件结构在[此处查阅](https://adblockplus.org/filter-cheatsh
   - [ ] 找一些 easylist 失效的场景，这里可以使用一些现成的广告拦截插件（例如 AdBlock）来寻找
   - [ ] 总结多方面的失败原因
 - To be continued.
+
+## 域名过滤的规则
+
+由于 easylistchina 中存在着太多不完整的域名，以及存在着许许多多的通配域名，例如：
+```
+*.ad.baidu.com
+adyss.
+```
+
+对于这种域名，我们采取以下策略：
+- 不完整域名：直接丢弃，当做没看见
+- 通配域名：尽可能保留域名最后面不带通配域名的部分
+
+## Rule parser 用法
+
+`Rule` 和 `Rules` 的定义参考 `filter_parser` 模块。
+
+主要通过 `repo_utils` 模块中的函数来读取 `easylistchina` 中所包含的各个历史版本的 filter 数据。
+
+Examples:
+```python
+import repo_utils
+
+repo = repo_utils.get_git_repo("/tmp/easylistchina")
+# 读取当前 repo 的规则
+rules = repo_utils.get_rules_rel_from_repo(repo, "easylistchina.txt")
+# 读取当前 repo 下所有历史版本的规则数据
+rules_list = list(repo_utils.iter_all_rules_from_repo(repo, "easylistchina.txt"))
+```
+
+`Rule` 对象下面最重要的是 `domain`，里面会可能有不完整或者通配域名等怪异状况，急需一个过滤手段。
+
