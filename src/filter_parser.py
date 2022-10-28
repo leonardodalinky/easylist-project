@@ -1,13 +1,13 @@
 """
 A simple parser for easylist filter format.
 
-Refer to github project [adblockparser](https://github.com/scrapinghub/adblockparser).
+Refer to GitHub project [adblockparser](https://github.com/scrapinghub/adblockparser).
 """
 import re
+from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from datetime import datetime
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 
 from attrs import define, field
 
@@ -116,17 +116,26 @@ class Rule:
 class Rules:
     rules: List[Rule]
     time: datetime
+    commit_hash: Optional[str] = None
 
     def __getitem__(self, index):
         assert isinstance(index, int), f"Index must be integer, but got {index}"
         return self.rules[index]
 
+    def __len__(self):
+        return len(self.rules)
+
+    def __iter__(self):
+        return iter(self.rules)
+
     @classmethod
-    def from_file(cls, filter_path: Union[str, PathLike], time: datetime):
+    def from_file(cls, filter_path: Union[str, PathLike], time: datetime, commit_hash: Optional[str] = None):
         filter_path = Path(filter_path)
-        assert filter_path.exists() and filter_path.is_file(), f"Filter file not found: {filter_path}"
+        assert (
+            filter_path.exists() and filter_path.is_file()
+        ), f"Filter file not found: {filter_path}"
         assert time is not None
         with filter_path.open("r", encoding="utf-8") as fp:
             lines = fp.readlines()
             rules = list(rule for line in lines for rule in Rule.parse(line))
-        return cls(rules=rules, time=time)
+        return cls(rules=rules, time=time, commit_hash=commit_hash)

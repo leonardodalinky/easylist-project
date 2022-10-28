@@ -5,7 +5,9 @@ Homework for graduate course.
 
 目前已经将 [easylist](https://github.com/easylist/easylist) 和 [easylistchina](https://github.com/easylist/easylistchina) 都加为子模块。
 
-easylist 以及 easylistchina 都已经**固定**到其 master 分支的一个比较新的 commit。之后的所有工作仅此 commit 之前的版本。
+easylist 以及 easylistchina 都需要**固定**到其 master 分支的一个比较新的 commit。之后的所有工作仅此 commit 之前的版本:
+* easylist: bb058be
+* easylistchina: 23537fb
 
 由于可能会涉及多版本回溯，子模块仅作为版本的 anchor，起提示作用。实际代码中可能并不会涉及到子模块中的内容，并且可能需要自行在其他版本中自行重新克隆子模块的项目。
 
