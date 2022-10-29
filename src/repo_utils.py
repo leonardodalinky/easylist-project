@@ -3,7 +3,7 @@ Utilities for repo manipulations.
 """
 from os import PathLike
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from git.repo import Repo
 
@@ -27,7 +27,9 @@ def get_rules_rel_from_repo(repo: Repo, rel_filepath: Union[str, PathLike]):
     comm = repo.head.commit
     assert repo.working_tree_dir is not None
     return Rules.from_file(
-        Path(repo.working_tree_dir) / rel_filepath, comm.committed_datetime, commit_hash=comm.hexsha
+        Path(repo.working_tree_dir) / rel_filepath,
+        comm.committed_datetime,
+        commit_hash=comm.hexsha,
     )
 
 
@@ -54,30 +56,35 @@ class _RulesIterator:
         self.repo = repo
         self.origin_comm = repo.head.commit
         self.rel_filepath = rel_filepath
-        self.count = count
+        self.count: Optional[int] = max(count, 0) if count is not None else None
         self.commits = list(repo.iter_commits(paths=rel_filepath))
         self.index = 0
 
     def __len__(self):
-        return len(self.commits)
+        if self.count is None:
+            return len(self.commits)
+        else:
+            return min(len(self.commits), self.count)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if self.index >= len(self.commits) or (self.count is not None and self.index >= self.count):
-            self.repo.head.set_commit(self.origin_comm)
+        if self.index >= len(self.commits) or (
+            self.count is not None and self.index >= self.count
+        ):
+            self.repo.git.checkout(self.origin_comm)
             raise StopIteration
         comm = self.commits[self.index]
-        self.repo.head.set_commit(comm)
+        self.repo.git.checkout(comm)
         self.index += 1
         return get_rules_rel_from_repo(self.repo, self.rel_filepath)
 
     def __del__(self):
-        self.repo.head.set_commit(self.origin_comm)
+        self.repo.git.checkout(self.origin_comm)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.repo.head.set_commit(self.origin_comm)
+        self.repo.git.checkout(self.origin_comm)

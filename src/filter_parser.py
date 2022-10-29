@@ -3,11 +3,12 @@ A simple parser for easylist filter format.
 
 Refer to GitHub project [adblockparser](https://github.com/scrapinghub/adblockparser).
 """
+import json
 import re
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from attrs import define, field
 
@@ -37,13 +38,33 @@ OPTIONS_SPLIT_PAT = ",(?=~?(?:%s))" % ("|".join(BINARY_OPTIONS + ["domain"]))
 OPTIONS_SPLIT_RE = re.compile(OPTIONS_SPLIT_PAT)
 
 
-@define(kw_only=True)
+@define(kw_only=True, frozen=True)
 class Rule:
     raw_rule_text: str
     domain: str
     is_exception: bool = False
     is_html_rule: bool = False
     options: Dict[str, Any] = field(factory=dict)
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Rule):
+            return False
+        return (
+            self.domain == other.domain
+            and self.is_exception == other.is_exception
+            and self.is_html_rule == other.is_html_rule
+            and self.options == other.options
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self.domain,
+                self.is_exception,
+                self.is_html_rule,
+                json.dumps(self.options, sort_keys=True),
+            )
+        )
 
     @classmethod
     def parse(cls, rule_text: str) -> List["Rule"]:
@@ -114,9 +135,10 @@ class Rule:
 
 @define(kw_only=True)
 class Rules:
-    rules: List[Rule]
+    rules: Tuple[Rule]
     time: datetime
     commit_hash: Optional[str] = None
+    rules_set: Set[Rule] = field()
 
     def __getitem__(self, index):
         assert isinstance(index, int), f"Index must be integer, but got {index}"
@@ -128,8 +150,20 @@ class Rules:
     def __iter__(self):
         return iter(self.rules)
 
+    def __contains__(self, item):
+        return item in self.rules_set
+
+    @rules_set.default
+    def _init_rules_set(self):
+        return set(self.rules)
+
     @classmethod
-    def from_file(cls, filter_path: Union[str, PathLike], time: datetime, commit_hash: Optional[str] = None):
+    def from_file(
+        cls,
+        filter_path: Union[str, PathLike],
+        time: datetime,
+        commit_hash: Optional[str] = None,
+    ):
         filter_path = Path(filter_path)
         assert (
             filter_path.exists() and filter_path.is_file()
@@ -137,5 +171,5 @@ class Rules:
         assert time is not None
         with filter_path.open("r", encoding="utf-8") as fp:
             lines = fp.readlines()
-            rules = list(rule for line in lines for rule in Rule.parse(line))
+            rules = tuple(rule for line in lines for rule in Rule.parse(line))
         return cls(rules=rules, time=time, commit_hash=commit_hash)

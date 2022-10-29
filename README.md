@@ -59,3 +59,23 @@ rules_list = list(repo_utils.iter_all_rules_from_repo(repo, "easylistchina.txt")
 
 `Rule` 对象下面最重要的是 `domain`，里面会可能有不完整或者通配域名等怪异状况，急需一个过滤手段。
 
+
+## Scripts 用法
+
+### `scripts/extract_easylists.py`
+
+这个脚本用来提取所有的历史 easylistchina 中的 `easylistchina.txt` 文件，并存储在指定目录下。
+
+Usage:
+```bash
+# 提取 easylistchina 中的 easylistchina.txt 文件
+python scripts/extract_easylists.py -r /tmp/easylistchina -f easylistchina.txt -o /tmp/all_easylists
+```
+
+### `scripts/diff.py`
+
+这个脚本用来执行不同版本的 `easylistchina.txt` 的差分操作，必须用于 `extract_easylists.py` 所生成的目录。
+
+```bash
+
+```
