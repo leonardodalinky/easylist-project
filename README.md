@@ -20,9 +20,12 @@ easylist 的文件结构在[此处查阅](https://adblockplus.org/filter-cheatsh
   - [ ] 最新版本的独立域名统计，包括有多少个不同的域名，每个二级/三级域名下，又有多少个规则等
   - [ ] 对历史版本都进行统计
 - filter 差分统计
-  - [ ] 对各个版本中的 filters 进行差分过滤，得到每个版本中的变化情况。我们只记录 filter 的增加与删除，对于 filter 的修改，我们将其当作一次删除与一次增加。找一个格式存储，例如 json 等。
-  - 根据上面所获得的各个版本的变更信息，使用**一些规则**来统计**一些信息**。这一点比较重要，待细化。
-  - FP 错误该如何从这里面找出来呢？我个人认为，如果对某个域名新增了 exception rules，那基本上就是 FP 错误。因此可以从这一点入手，我们就不搞花里胡哨的论坛帖子爬取这些东西了。
+  - [ ] 对各个版本中的 filters 进行差分过滤，得到每个版本中的变化情况。我们只记录 filter 的增加与删除，对于 filter 的修改，我们将其当作一次删除与一次增加。使用 JSON 形式记录。
+  - 根据上面所获得的各个版本的变更信息，并分析一些信息:
+    - 新增和删去的规则中，其数量多少，normal rule 和 html rule 各有多少
+    - 平均每个 commit 之间的时间差
+    - 所认为的新增的 Exception rule 的数量
+    - 单独的 EX rule 的添加时间，与其 base rule 的添加时间的时间差
 - easylist 失效的情景
   - [ ] 找一些 easylist 失效的场景，这里可以使用一些现成的广告拦截插件（例如 AdBlock）来寻找
   - [ ] 总结多方面的失败原因
@@ -59,6 +62,13 @@ rules_list = list(repo_utils.iter_all_rules_from_repo(repo, "easylistchina.txt")
 
 `Rule` 对象下面最重要的是 `domain`，里面会可能有不完整或者通配域名等怪异状况，急需一个过滤手段。
 
+如果已有 `extract_easylists.py` 预处理好的 easylist 大全，那么可以手动加载 `Rules`:
+```python
+from datetime import datetime
+from filter_parser import Rules
+
+rules = Rules.from_file("/tmp/easylistchina.txt", time=datetime.utcnow(), commit_hash="1H34SD8A0")
+```
 
 ## Scripts 用法
 
@@ -77,5 +87,11 @@ python scripts/extract_easylists.py -r /tmp/easylistchina -f easylistchina.txt -
 这个脚本用来执行不同版本的 `easylistchina.txt` 的差分操作，必须用于 `extract_easylists.py` 所生成的目录。
 
 ```bash
-
+python scripts/diff.py -d /tmp/all_easylists -o /tmp/easylists_diff
 ```
+
+## easylistchina 失效的情景
+
+1. 有一些域名未被列入 easylist 中，而是委托给一些小广告商，然后他们经常改变域名，使得难以被追踪
+2. 有一些网站加载了 anti-adblock 的脚本，这些脚本会检测广告是否正常加载，如果没有加载，那么就会显示一些提示，或者直接阻止网页的正常加载
+3. To be continued.
