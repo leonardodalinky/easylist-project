@@ -2,3 +2,7 @@ attrs>=22.1.0
 GitPython
 tqdm
 joblib
+numpy
+pandas
+matplotlib
+wget
