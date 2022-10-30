@@ -3,6 +3,7 @@ from os import PathLike
 from typing import Optional, Union
 from datetime import datetime
 from filter_parser import Rules
+from rank_utils import *
 
 
 top_level_domain = [
@@ -39,7 +40,7 @@ top_level_domain = [
     'eh','kp','ax','bv','gb','sj','um','tp','su',
     'cs','dd','zr','fun',
     'fans','ren','club','city','fun','host',
-    'art','firm','nom','store','web','icu','shop','game','trip','top','energy','citic','baidu', 'cat','jobs','coop','tel','xxx','arpa','root','site','ltd','tech','uno','cyou','cool','online','love','homes','space','ink','rest','group','buzz','run','cloud','cam','rest','press','world','live','life','today','center','bar','pub','fit','work','wiki','technology','zone','link','website','design','fashion','bet','plus','email','email','video','pink','men','one','moe','review','lol','movie','best','tools','app','fish','blog','rocks','sex','coupons','click','international','bid','how','monster'
+    'art','firm','nom','store','web','icu','shop','game','trip','top','energy','citic', 'cat','jobs','coop','tel','xxx','arpa','root','site','ltd','tech','uno','cyou','cool','online','love','homes','space','ink','rest','group','buzz','run','cloud','cam','rest','press','world','live','life','today','center','bar','pub','fit','work','wiki','technology','zone','link','website','design','fashion','bet','plus','email','email','video','pink','men','one','moe','review','lol','movie','best','tools','app','fish','blog','rocks','sex','coupons','click','international','bid','how','monster'
 ]
 
 
@@ -84,15 +85,23 @@ def domains_cleaning(domains):
     return cleaning_data
 
 # 读入文件名，输出文件名
-def rank_domains(rules_file_path: Union[str, PathLike], rank_file_path: Union[str, PathLike]):
-    rules = rules_from_file(rules_file_path) 
-    domains = get_domains_from_rules(rules)
-    clean_domains = domains_cleaning(domains)
-    print("\nThere are "+str(len(domains))+" rules.")
-    print("Including "+str(len(clean_domains))+" domain names.\n")
-    file = open(rank_file_path, "w")
-    domains_rank = sorted(clean_domains.items(), key= lambda x:x[1], reverse=True) 
-    for item in domains_rank:
+
+rules_file_path = "E:/code/easylist_processed_mini/all_easylists/00000_23537fb46_1666856370.txt"
+rank_file_path = "../.cache/datadomain_rank.csv"
+#def rank_domains(rules_file_path: Union[str, PathLike], rank_file_path: Union[str, PathLike]):
+rules = rules_from_file(rules_file_path) 
+domains = get_domains_from_rules(rules)
+clean_domains = domains_cleaning(domains)
+print("\nThere are "+str(len(domains))+" rules.")
+print("Including "+str(len(clean_domains))+" domain names.\n")
+file = open(rank_file_path, "w")
+domains_rank = sorted(clean_domains.items(), key= lambda x:x[1], reverse=True) 
+file.write("domain,frequent,globalRank\n")
+majestic = load_majestic()
+for item in domains_rank:
+    if len(find_majestic_rank_entry_by_domain(item[0], majestic))>0:
+        file.write(item[0]+","+str(item[1])+","+str(find_majestic_rank_entry_by_domain(item[0], majestic)["GlobalRank"].values[0]))
+    else:
         file.write(item[0]+","+str(item[1]))
-        file.write('\n')
-    file.close()
+    file.write('\n')
+file.close()
